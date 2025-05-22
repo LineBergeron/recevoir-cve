@@ -1,44 +1,58 @@
 <?php
-// Connexion à ta base MySQL
-$host = 'localhost';
-$dbname = 'nom_de_ta_base';
-$username = 'ton_utilisateur';
-$password = 'ton_mot_de_passe';
-$dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json");
 
-try {
-    $pdo = new PDO($dsn, $username, $password);
-} catch (PDOException $e) {
-    echo json_encode(["status" => "Erreur", "message" => "Connexion échouée : " . $e->getMessage()]);
-    exit;
-}
+// Lire les données JSON
+$donnees = json_decode(file_get_contents("php://input"), true);
 
-// Récupérer les données JSON envoyées
-$data = json_decode(file_get_contents("php://input"), true);
-
-if (!isset($data['lignes']) || !is_array($data['lignes'])) {
+if (!isset($donnees["lignes"])) {
+    http_response_code(400);
     echo json_encode(["status" => "Erreur", "message" => "Aucune donnée reçue."]);
     exit;
 }
 
-$reçues = 0;
+// 🔐 Connexion à votre base
+$host = "sql308.infinityfree.com";
+$user = "if0_38948695";
+$password = "IMnelimelo422";
+$dbname = "if0_38948695_gestionmembres";
 
-foreach ($data['lignes'] as $ligne) {
-    // Adapter selon ta table tmpNewMembers (21 ou 22 champs)
-    $stmt = $pdo->prepare("INSERT INTO tmpNewMembers (
-        col1, col2, col3, col4, col5, col6, col7, col8, col9, col10,
-        col11, col12, col13, col14, col15, col16, col17, col18, col19, col20, col21, col22
+$conn = new mysqli($host, $user, $password, $dbname);
+if ($conn->connect_error) {
+    http_response_code(500);
+    echo json_encode(["status" => "Erreur", "message" => "Connexion MySQL échouée."]);
+    exit;
+}
+
+// Préparer l'insertion (22 colonnes)
+$stmt = $conn->prepare("
+    INSERT INTO Response (
+        No, Date, LastName, FirstName, Gender, Language, CveAdress, Tel1, Tel2, EmailAdress,
+        ResidenceStatus, CvePlay, CveSeason, AveragePlayMonth, AveragePlayDay, DateOther,
+        Agree, Initials, TeamBefore, TeamName, TeamPref, Level
     ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    )");
+    )
+");
 
-    // $ligne doit contenir exactement 22 éléments (colonnes A à V)
-    if (count($ligne) >= 22) {
-        $stmt->execute(array_slice($ligne, 0, 22));
-        $reçues++;
-    }
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(["status" => "Erreur", "message" => "Erreur lors de la préparation SQL."]);
+    exit;
 }
+
+// Insérer chaque ligne
+$reçues = 0;
+foreach ($donnees["lignes"] as $ligne) {
+    $params = array_pad($ligne, 22, null);  // Assure 22 valeurs
+    $stmt->bind_param(str_repeat("s", 22), ...$params);
+    $stmt->execute();
+    $reçues++;
+}
+
+$stmt->close();
+$conn->close();
 
 echo json_encode(["status" => "Succès", "reçues" => $reçues]);
 ?>
