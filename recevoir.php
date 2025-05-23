@@ -15,7 +15,7 @@ if (!isset($donnees["lignes"]) || !is_array($donnees["lignes"])) {
 $host = "sql308.infinityfree.com";
 $dbname = "if0_38948695_gestionmembres";
 $username = "if0_38948695";
-$password = "IMnelimelo422";
+$password = "INmelimelo422";
 $charset = "utf8mb4";
 
 try {
