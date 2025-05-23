@@ -5,53 +5,52 @@ header("Content-Type: application/json");
 // Lire les données JSON
 $donnees = json_decode(file_get_contents("php://input"), true);
 
-if (!isset($donnees["lignes"]) || !is_array($donnees["lignes"])) {
+if (!isset($donnees["lignes"])) {
     http_response_code(400);
     echo json_encode(["status" => "Erreur", "message" => "Aucune donnée reçue."]);
     exit;
 }
 
-// Connexion à la base MySQL avec PDO
+// 🔐 Connexion à votre base
 $host = "sql308.infinityfree.com";
-$dbname = "if0_38948695_gestionmembres";
-$username = "if0_38948695";
+$user = "if0_38948695";
 $password = "INmelimelo422";
-$charset = "utf8mb4";
+$dbname = "if0_38948695_gestionmembres";
 
-try {
-    $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
-    $options = [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ];
-    $pdo = new PDO($dsn, $username, $password, $options);
-} catch (PDOException $e) {
+$conn = new mysqli($host, $user, $password, $dbname);
+if ($conn->connect_error) {
     http_response_code(500);
-    echo json_encode(["status" => "Erreur", "message" => "Connexion échouée : " . $e->getMessage()]);
+    echo json_encode(["status" => "Erreur", "message" => "Connexion MySQL échouée."]);
     exit;
 }
 
-// Préparer la requête d’insertion
-$sql = "
+// Préparer l'insertion (21 colonnes)
+$stmt = $conn->prepare("
     INSERT INTO Response (
         No, Date, LastName, FirstName, Gender, Language, CveAdress, Tel1, Tel2, EmailAdress,
         ResidenceStatus, CvePlay, CveSeason, AveragePlayMonth, AveragePlayDay, DateOther,
-        Agree, Initials, TeamBefore, TeamName, TeamPref, Level
+        Agree, Initials, TeamBefore, TeamName, Level
     ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
-";
+");
 
-$stmt = $pdo->prepare($sql);
-
-// Exécuter les insertions
-$reçues = 0;
-foreach ($donnees["lignes"] as $ligne) {
-    $params = array_pad($ligne, 22, null); // S'assurer d'avoir 22 colonnes
-    $stmt->execute($params);
-    $reçues++;
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(["status" => "Erreur", "message" => "Erreur lors de la préparation SQL."]);
+    exit;
 }
 
-// Réponse
-echo json_encode(["status" => "Succès", "reçues" => $reçues]);
+// Insérer chaque ligne
+foreach ($donnees["lignes"] as $ligne) {
+    $params = array_pad($ligne, 21, null);
+    $stmt->bind_param(str_repeat("s", 21), ...$params);
+    $stmt->execute();
+}
+
+$stmt->close();
+$conn->close();
+
+echo json_encode(["status" => "Succès", "message" => "Données insérées avec succès."]);
+?>
