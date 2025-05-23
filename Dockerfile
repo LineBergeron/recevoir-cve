@@ -1,3 +1,4 @@
+RUN docker-php-ext-install mysqli
 FROM php:8.1-cli
 
 # Installer mysqli
