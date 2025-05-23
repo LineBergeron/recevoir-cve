@@ -1,17 +1,18 @@
-RUN docker-php-ext-install mysqli
 FROM php:8.1-cli
 
-# Installer mysqli
-RUN docker-php-ext-install mysqli
+# Installation des dépendances nécessaires pour mysqli
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd mysqli
 
-# Copier les fichiers PHP dans le conteneur
+# Copier les fichiers dans le conteneur
 COPY . /var/www/html
 
-# Définir le dossier de travail
+# Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Exposer le port utilisé
+# Exposer le port utilisé par le serveur PHP intégré
 EXPOSE 80
 
-# Lancer le serveur PHP
+# Démarrer le serveur PHP
 CMD ["php", "-S", "0.0.0.0:80"]
