@@ -1,5 +1,6 @@
 <?php
 // recevoir_html.php
+
 $token = $_GET['token'] ?? '';
 if ($token !== 'monsecret123') {
     http_response_code(403);
@@ -14,13 +15,13 @@ if (!$contenu) {
     exit;
 }
 
-// 🔥 Chemin de destination dans Render (dans le dossier public)
+// 🔥 Nouveau chemin direct à la racine du dossier Render
 $fichier = __DIR__ . '/public/membres_web.html';
 
-if (file_put_contents($fichier, $contenu) !== false) {
-    echo json_encode(['status' => 'OK', 'message' => 'Fichier HTML reçu']);
-} else {
+if (file_put_contents($fichier, $contenu) === false) {
     http_response_code(500);
-    echo json_encode(['status' => 'Erreur', 'message' => 'Erreur lors de l\'écriture']);
+    echo json_encode(['status' => 'Erreur', 'message' => 'Impossible de créer le fichier']);
+    exit;
 }
-?>
+
+echo json_encode(['status' => 'OK', 'message' => 'Fichier HTML reçu']);
