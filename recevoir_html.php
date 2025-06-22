@@ -16,12 +16,14 @@ if (!$contenu) {
 }
 
 // 🔥 Nouveau chemin direct à la racine du dossier Render
-$fichier = __DIR__ . '/public/membres_web.html';
+$fichier = __DIR__ . '/membres_web.html';
 
 if (file_put_contents($fichier, $contenu) === false) {
     http_response_code(500);
     echo json_encode(['status' => 'Erreur', 'message' => 'Impossible de créer le fichier']);
     exit;
-}
-
-echo json_encode(['status' => 'OK', 'message' => 'Fichier HTML reçu']);
+}echo json_encode([
+    'status' => 'OK',
+    'message' => 'Fichier HTML reçu',
+    'fichier' => realpath($fichier)
+]);
