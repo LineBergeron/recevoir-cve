@@ -1,13 +1,26 @@
 <?php
-$tokenAttendu = "monsecret123";
-if (!isset($_GET["token"]) || $_GET["token"] !== $tokenAttendu) {
+// recevoir_html.php
+$token = $_GET['token'] ?? '';
+if ($token !== 'monsecret123') {
     http_response_code(403);
-    echo "Accès refusé.";
+    echo json_encode(['status' => 'Erreur', 'message' => 'Token invalide']);
     exit;
 }
 
 $contenu = file_get_contents("php://input");
-file_put_contents(__DIR__ . "/public/membres_web.html", $contenu);
+if (!$contenu) {
+    http_response_code(400);
+    echo json_encode(['status' => 'Erreur', 'message' => 'Aucun contenu reçu']);
+    exit;
+}
 
-echo json_encode(["status" => "OK", "message" => "Fichier HTML reçu."]);
+// 🔥 Chemin de destination dans Render (dans le dossier public)
+$fichier = __DIR__ . '/public/membres_web.html';
+
+if (file_put_contents($fichier, $contenu) !== false) {
+    echo json_encode(['status' => 'OK', 'message' => 'Fichier HTML reçu']);
+} else {
+    http_response_code(500);
+    echo json_encode(['status' => 'Erreur', 'message' => 'Erreur lors de l\'écriture']);
+}
 ?>
